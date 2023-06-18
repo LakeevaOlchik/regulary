@@ -1,63 +1,61 @@
+import re
+
 from pprint import pprint
+
 import csv
 
-PHONE_PATTERN = r'(\+7|8)*[\s\(]*(\d{3})[\)\s-]*(\d{3})[-]*(\d{2})[-]*(\d{2})[\s\(]*(доб\.)*[\s]*(\d+)*[\)]*'
-PHONE_SUB = r'+7(\2)-\3-\4-\5 \6\7'
-
-with open("phonebook_raw.csv") as f:
+with open("phonebook_raw.csv", encoding='utf8') as f:
     rows = csv.reader(f, delimiter=",")
+
     contacts_list = list(rows)
-pprint(contacts_list)
 
-## 1. Выполните пункты 1-3 задания.
-## Ваш код
-def main(contact_list: list):
-    """основная логика"""
-    new_list = list()
-    for item in contact_list:
-        full_name = ' '.join(item[:3]).split(' ')
-        result = [full_name[0], full_name[1], full_name[2], item[3], item[4],
-                  re.sub(PHONE_PATTERN, PHONE_SUB, item[5]),
-                  item[6]]
-        new_list.append(result)
-    return union(new_list)
+# TODO 1: выполните пункты 1-3 ДЗ
 
-def numbers(contact: list):
-    for i in contact_list:
-        tel = str(i)
-        tel2 = (re.findall('\+([7-8]\([0-9]+\)[0-9]+\-[0-9]+)', tel))
-        if tel2:
-            number_list.append(tel2)
-    return number_list
+phone_pattern = re.compile(
+    r'(\+7|8)\s*\(?(\d{3})\)?(\s*|-)(\d{3})(\s*|-*)(\d{2})-?(\d{2})(\s*(\(?(\доб.)?)\s*(\d{4}))?(\))*')
 
-def union(contacts: list):
-    """функция удаления одинаковых и повторяющихся элементов"""
-    for contact in contacts:
-        first_name = contact[0]
-        last_name = contact[1]
-        for new_contact in contacts:
-            new_first_name = new_contact[0]
-            new_last_name = new_contact[1]
-            if first_name == new_first_name and last_name == new_last_name:
-                if contact[2] == "": contact[2] = new_contact[2]
-                if contact[3] == "": contact[3] = new_contact[3]
-                if contact[4] == "": contact[4] = new_contact[4]
-                if contact[5] == "": contact[5] = new_contact[5]
-                if contact[6] == "": contact[6] = new_contact[6]
-    result_list = list()
-    for i in contacts:
-        if i not in result_list:
-            result_list.append(i)
+text_pattern = re.compile(
+    r'(\w+[А-яЁё])\s*\,*(\w+[А-яЁё])\s*\,*(\w+[А-яЁё])*\,*(\w+[А-яЁё])*\,*(\w+[А-яЁё]\w+[А-яЁё –]*\–*\s*)*\,*(\+*\d\s*\(*\d+\)*\-*\s*\d+\-*\d+\-*\d+\s*\(*\w*\.*\s*\d*\)*)*\,*(\w+\.*\w*\@\w+\.\w+)*')
 
-    return result_list
+new_contacts_list = []
 
-## 2. Сохраните получившиеся данные в другой файл.
-## Код для записи файла в формате CSV:
+for i in range(len(contacts_list)):
+
+    if i == 0:
+
+        new_contacts_list.append(contacts_list[i])
+
+    else:
+
+        line = ','.join(contacts_list[i])
+
+        result = re.search(text_pattern, line)
+
+        new_contacts_list.append(list(result.groups()))
+
+        if new_contacts_list[i][0] in new_contacts_list:
+            print(new_contacts_list[i][0:3])
+
+        if new_contacts_list[i][5] != None:
+            new_contacts_list[i][5] = phone_pattern.sub(r'+7(\2)\4-\6-\7 \10\11', new_contacts_list[i][5])
+
+final_contacts_list = []
+
+for i in range(len(new_contacts_list)):
+
+    for j in range(len(new_contacts_list)):
+
+        if new_contacts_list[i][0] == new_contacts_list[j][0]:
+            new_contacts_list[i] = [x or y for x, y in zip(new_contacts_list[i], new_contacts_list[j])]
+
+    if new_contacts_list[i] not in final_contacts_list:
+        final_contacts_list.append(new_contacts_list[i])
+
+pprint(final_contacts_list)
+
+# TODO 2: сохраните получившиеся данные в другой файл
+
 with open("phonebook.csv", "w") as f:
     datawriter = csv.writer(f, delimiter=',')
 
-    ## Вместо contacts_list подставьте свой список:
-    datawriter.writerows(contacts_list)
-
-
-
+    datawriter.writerows(final_contacts_list)
